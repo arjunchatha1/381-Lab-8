@@ -144,6 +144,77 @@ def delete_user(user_id):
     
     return jsonify({"message": f"User {user_id} was not found."}), 404
 
+
+
+
+@app.route("/predict_house_price", methods=["POST"])
+def predictionModel():
+    try:
+        model = joblib.load(MODEL_PATH)
+
+        data = request.json
+
+        cats = dogs = bool(data['pets'])
+
+        sample_data = [
+            data['city'],
+            data['province'],
+            float(data['latitude']),
+            float(data['longitude']),
+            data['lease_term'],
+            data['type'],
+            float(data['beds']),
+            float(data['baths']),
+            float(data['sq_feet']),
+            data['furnishing'],
+            data['smoking'],
+            cats,
+            dogs,
+        ]
+
+        sample_df = pd.DataFrame([sample_data], columns=[
+            'city', 'province', 'latitude', 'longitude', 'lease_term',
+            'type', 'beds', 'baths', 'sq_feet', 'furnishing',
+            'smoking', 'cats', 'dogs'
+        ])
+
+        predicted_price = model.predict(sample_df)[0]
+
+        print(predicted_price)
+
+        return jsonify({"predicted_price": predicted_price}), 200
+
+    except Exception as e:
+        # check value functions to give detailed error message
+
+        try:
+            float(data['latitude'])
+        except Exception as e:
+            return jsonify({"message": "latitude must be a number"}), 400
+
+        try:
+            float(data['longitude'])
+        except Exception as e:
+            return jsonify({"message": "longitude must be a number"}), 400
+
+        try:
+            float(data['beds'])
+        except Exception as e:
+            return jsonify({"message": "beds must be a number"}), 400
+
+        try:
+            float(data['baths'])
+        except Exception as e:
+            return jsonify({"message": "baths must be a number"}), 400
+
+        try:
+            float(data['sq_feet'])
+        except Exception as e:
+            return jsonify({"message": "sq_feet must be a number"}), 400
+
+        # generic message if non of the above failed
+        return jsonify({"message": "An error occurred"}), 400
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5050)
-
